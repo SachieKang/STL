@@ -7,6 +7,7 @@ set(HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/inc/any
     ${CMAKE_CURRENT_LIST_DIR}/inc/array
     ${CMAKE_CURRENT_LIST_DIR}/inc/atomic
+    ${CMAKE_CURRENT_LIST_DIR}/inc/bit
     ${CMAKE_CURRENT_LIST_DIR}/inc/bitset
     ${CMAKE_CURRENT_LIST_DIR}/inc/cassert
     ${CMAKE_CURRENT_LIST_DIR}/inc/ccomplex
@@ -135,7 +136,6 @@ set(HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/inc/experimental/unordered_map
     ${CMAKE_CURRENT_LIST_DIR}/inc/experimental/unordered_set
     ${CMAKE_CURRENT_LIST_DIR}/inc/experimental/vector
-    ${CMAKE_CURRENT_LIST_DIR}/inc/experimental/xutility
     ${CMAKE_CURRENT_LIST_DIR}/inc/filesystem
     ${CMAKE_CURRENT_LIST_DIR}/inc/forward_list
     ${CMAKE_CURRENT_LIST_DIR}/inc/fstream
@@ -159,6 +159,7 @@ set(HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/inc/memory_resource
     ${CMAKE_CURRENT_LIST_DIR}/inc/mutex
     ${CMAKE_CURRENT_LIST_DIR}/inc/new
+    ${CMAKE_CURRENT_LIST_DIR}/inc/numbers
     ${CMAKE_CURRENT_LIST_DIR}/inc/numeric
     ${CMAKE_CURRENT_LIST_DIR}/inc/optional
     ${CMAKE_CURRENT_LIST_DIR}/inc/ostream
@@ -170,6 +171,7 @@ set(HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/inc/scoped_allocator
     ${CMAKE_CURRENT_LIST_DIR}/inc/set
     ${CMAKE_CURRENT_LIST_DIR}/inc/shared_mutex
+    ${CMAKE_CURRENT_LIST_DIR}/inc/span
     ${CMAKE_CURRENT_LIST_DIR}/inc/sstream
     ${CMAKE_CURRENT_LIST_DIR}/inc/stack
     ${CMAKE_CURRENT_LIST_DIR}/inc/stdexcept
@@ -217,7 +219,6 @@ set(HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/inc/xsmf_control.h
     ${CMAKE_CURRENT_LIST_DIR}/inc/xstddef
     ${CMAKE_CURRENT_LIST_DIR}/inc/xstring
-    ${CMAKE_CURRENT_LIST_DIR}/inc/xtgmath.h
     ${CMAKE_CURRENT_LIST_DIR}/inc/xthreads.h
     ${CMAKE_CURRENT_LIST_DIR}/inc/xtimec.h
     ${CMAKE_CURRENT_LIST_DIR}/inc/xtr1common
@@ -236,6 +237,7 @@ endforeach()
 # Objs that exist in both libcpmt[d][01].lib and msvcprt[d].lib.
 set(IMPLIB_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/filesystem.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/filesystem_space.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/locale0_implib.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/nothrow.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/parallel_algorithms.cpp

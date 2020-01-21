@@ -9,7 +9,9 @@
 #include <yvals.h>
 #if _STL_COMPILER_PREPROCESSOR
 
-#if _HAS_CXX17
+#if !_HAS_CXX17
+#pragma message("The contents of <memory_resource> are available only with C++17 or later.")
+#else // ^^^ !_HAS_CXX17 / _HAS_CXX17 vvv
 #include <vector>
 #include <xbit_ops.h>
 #include <xpolymorphic_allocator.h>
@@ -114,7 +116,7 @@ namespace pmr {
     struct _Intrusive_list { // intrusive circular list of _Ty (which must derive from _Double_link<_Tag>)
         using _Link_type = _Double_link<_Tag>;
 
-        constexpr _Intrusive_list() noexcept { // TRANSITION, VSO#517878
+        constexpr _Intrusive_list() noexcept { // TRANSITION, VSO-517878
             // initialize this list to the empty state
         }
 
@@ -715,7 +717,7 @@ namespace pmr {
                 return _Max_allocation;
             }
 
-            return (_Size + ((_Size + 1) >> 1) + alignof(_Header) - 1) & _Max_allocation;
+            return (_Size + (_Size + 1) / 2 + alignof(_Header) - 1) & _Max_allocation;
         }
 
         void _Increase_capacity(const size_t _Bytes, const size_t _Align) { // obtain a new buffer from upstream
@@ -755,8 +757,6 @@ _STD_END
 _STL_RESTORE_CLANG_WARNINGS
 #pragma warning(pop)
 #pragma pack(pop)
-#else // ^^^ _HAS_CXX17 / !_HAS_CXX17 vvv
-#pragma message("The contents of <memory_resource> are only available with C++17 or later.")
 #endif // _HAS_CXX17
 #endif // _STL_COMPILER_PREPROCESSOR
 #endif // _MEMORY_RESOURCE_

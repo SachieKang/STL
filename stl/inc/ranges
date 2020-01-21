@@ -8,7 +8,9 @@
 #define _RANGES_
 #include <yvals_core.h>
 #if _STL_COMPILER_PREPROCESSOR
-#ifdef __cpp_lib_concepts
+#ifndef __cpp_lib_concepts
+#pragma message("The contents of <ranges> are available only with C++20 concepts support.")
+#else // ^^^ !defined(__cpp_lib_concepts) / defined(__cpp_lib_concepts) vvv
 #include <iterator>
 
 #pragma pack(push, _CRT_PACKING)
@@ -26,6 +28,10 @@ namespace ranges {
     // CONCEPT ranges::common_range
     template <class _Rng>
     concept common_range = range<_Rng> && same_as<iterator_t<_Rng>, sentinel_t<_Rng>>;
+
+    // CONCEPT ranges::viewable_range
+    template <class _Rng>
+    concept viewable_range = range<_Rng> && (safe_range<_Rng> || view<remove_cvref_t<_Rng>>);
     // clang-format on
 } // namespace ranges
 _STD_END
@@ -34,8 +40,6 @@ _STD_END
 _STL_RESTORE_CLANG_WARNINGS
 #pragma warning(pop)
 #pragma pack(pop)
-#else // ^^^ Concepts support / no Concepts vvv
-#pragma message("The contents of <ranges> are only available with C++20 concepts support.")
 #endif // __cpp_lib_concepts
 #endif // _STL_COMPILER_PREPROCESSOR
 #endif // _RANGES_

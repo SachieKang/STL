@@ -9,7 +9,9 @@
 #include <yvals.h>
 #if _STL_COMPILER_PREPROCESSOR
 
-#if _HAS_CXX17
+#if !_HAS_CXX17
+#pragma message("The contents of <charconv> are available only with C++17 or later.")
+#else // ^^^ !_HAS_CXX17 / _HAS_CXX17 vvv
 #include <float.h>
 #include <intrin0.h>
 #include <string.h>
@@ -187,6 +189,8 @@ inline to_chars_result to_chars(char* const _First, char* const _Last, const uns
     const int _Base = 10) noexcept /* strengthened */ {
     return _Integer_to_chars(_First, _Last, _Value, _Base);
 }
+
+to_chars_result to_chars(char* _First, char* _Last, bool _Value, int _Base = 10) = delete;
 
 
 // FUNCTION TEMPLATE _Bit_cast
@@ -1676,7 +1680,7 @@ _NODISCARD errc _Convert_hexadecimal_string_to_floating_type(
 
 // C11 6.4.4.2 "Floating constants" (without floating-suffix, hexadecimal-prefix)
 // amended by C11 7.22.1.3 "The strtod, strtof, and strtold functions" making exponents optional
-// LWG 3080: "the sign '+' may only appear in the exponent part"
+// LWG-3080: "the sign '+' may only appear in the exponent part"
 
 // digit-sequence:
 //     digit
@@ -2514,7 +2518,7 @@ template <typename UInt, typename Pred>
     assert(first <= last);
 
     for (UInt n = last - first; n > 0;) {
-        const UInt n2  = n >> 1;
+        const UInt n2  = n / 2;
         const UInt mid = first + n2;
 
         if (pred(mid)) {
@@ -3097,8 +3101,6 @@ _STD_END
 _STL_RESTORE_CLANG_WARNINGS
 #pragma warning(pop)
 #pragma pack(pop)
-#else // ^^^ _HAS_CXX17 / !_HAS_CXX17 vvv
-#pragma message("The contents of <charconv> are only available with C++17 or later.")
 #endif // _HAS_CXX17
 #endif // _STL_COMPILER_PREPROCESSOR
 #endif // _CHARCONV_

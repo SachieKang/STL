@@ -78,7 +78,7 @@ private:
 public:
     using hasher    = _Hasher;
     using key_type  = _Kty;
-    using key_equal = typename _Mytraits::key_equal;
+    using key_equal = _Keyeq;
 
     using value_type      = typename _Mybase::value_type;
     using allocator_type  = typename _Mybase::allocator_type;
@@ -309,6 +309,13 @@ void swap(unordered_set<_Kty, _Hasher, _Keyeq, _Alloc>& _Left,
     _Left.swap(_Right);
 }
 
+#if _HAS_CXX20
+template <class _Kty, class _Hasher, class _Keyeq, class _Alloc, class _Pr>
+void erase_if(unordered_set<_Kty, _Hasher, _Keyeq, _Alloc>& _Cont, _Pr _Pred) {
+    _Erase_nodes_if(_Cont, _Pass_fn(_Pred));
+}
+#endif // _HAS_CXX20
+
 template <class _Kty, class _Hasher, class _Keyeq, class _Alloc>
 _NODISCARD bool operator==(const unordered_set<_Kty, _Hasher, _Keyeq, _Alloc>& _Left,
     const unordered_set<_Kty, _Hasher, _Keyeq, _Alloc>& _Right) {
@@ -339,7 +346,7 @@ private:
 public:
     using hasher    = _Hasher;
     using key_type  = _Kty;
-    using key_equal = typename _Mytraits::key_equal;
+    using key_equal = _Keyeq;
 
     using value_type      = typename _Mybase::value_type;
     using allocator_type  = typename _Mybase::allocator_type;
@@ -564,6 +571,13 @@ void swap(unordered_multiset<_Kty, _Hasher, _Keyeq, _Alloc>& _Left,
     unordered_multiset<_Kty, _Hasher, _Keyeq, _Alloc>& _Right) noexcept(noexcept(_Left.swap(_Right))) {
     _Left.swap(_Right);
 }
+
+#if _HAS_CXX20
+template <class _Kty, class _Hasher, class _Keyeq, class _Alloc, class _Pr>
+void erase_if(unordered_multiset<_Kty, _Hasher, _Keyeq, _Alloc>& _Cont, _Pr _Pred) {
+    _Erase_nodes_if(_Cont, _Pass_fn(_Pred));
+}
+#endif // _HAS_CXX20
 
 template <class _Kty, class _Hasher, class _Keyeq, class _Alloc>
 _NODISCARD bool operator==(const unordered_multiset<_Kty, _Hasher, _Keyeq, _Alloc>& _Left,

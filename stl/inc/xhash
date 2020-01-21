@@ -114,30 +114,15 @@ struct _Uhash_choose_transparency {
     // transparency selector for non-transparent hashed containers
     template <class>
     using _Deduce_key = const _Kty&;
-    using key_equal   = _Keyeq;
 };
 
 #if _HAS_CXX20
-template <class _Hasher, class = void>
-inline constexpr bool _Transparent_key_equal_is_transparent = false;
-
-template <class _Hasher>
-inline constexpr bool
-    _Transparent_key_equal_is_transparent<_Hasher, void_t<typename _Hasher::transparent_key_equal::is_transparent>> =
-        true;
-
 template <class _Kty, class _Hasher, class _Keyeq>
-struct _Uhash_choose_transparency<_Kty, _Hasher, _Keyeq, void_t<typename _Hasher::transparent_key_equal>> {
+struct _Uhash_choose_transparency<_Kty, _Hasher, _Keyeq,
+    void_t<typename _Hasher::is_transparent, typename _Keyeq::is_transparent>> {
     // transparency selector for transparent hashed containers
-    static_assert(_Transparent_key_equal_is_transparent<_Hasher>,
-        "Transparent hash functions' transparent_key_equal must be transparent; see N4810 [unord.req]/17.1");
-    static_assert(_Is_any_of_v<_Keyeq, typename _Hasher::transparent_key_equal, equal_to<_Kty>>,
-        "When transparent hash functions are in use, the equality predicate must match transparent_key_equal "
-        "or be equal_to<KeyType>; see N4810 [unord.req]/17.2");
-
     template <class _Keyty>
     using _Deduce_key = const _Keyty&;
-    using key_equal   = typename _Hasher::transparent_key_equal;
 };
 #endif // _HAS_CXX20
 
@@ -154,18 +139,16 @@ public:
         bucket_size = 1 // 0 < bucket_size
     };
 
-    using typename _Uhash_choose_transparency<_Kty, _Hasher, _Keyeq>::key_equal;
-
     _Uhash_compare() noexcept(
-        conjunction_v<is_nothrow_default_constructible<_Hasher>, is_nothrow_default_constructible<key_equal>>)
+        conjunction_v<is_nothrow_default_constructible<_Hasher>, is_nothrow_default_constructible<_Keyeq>>)
         : _Mypair(_Zero_then_variadic_args_t{}, _Zero_then_variadic_args_t{}, 0.0f) {}
 
     explicit _Uhash_compare(const _Hasher& _Hasharg) noexcept(
-        conjunction_v<is_nothrow_copy_constructible<_Hasher>, is_nothrow_default_constructible<key_equal>>)
+        conjunction_v<is_nothrow_copy_constructible<_Hasher>, is_nothrow_default_constructible<_Keyeq>>)
         : _Mypair(_One_then_variadic_args_t{}, _Hasharg, _Zero_then_variadic_args_t{}, 0.0f) {}
 
-    explicit _Uhash_compare(const _Hasher& _Hasharg, const key_equal& _Keyeqarg) noexcept(
-        conjunction_v<is_nothrow_copy_constructible<_Hasher>, is_nothrow_copy_constructible<key_equal>>)
+    explicit _Uhash_compare(const _Hasher& _Hasharg, const _Keyeq& _Keyeqarg) noexcept(
+        conjunction_v<is_nothrow_copy_constructible<_Hasher>, is_nothrow_copy_constructible<_Keyeq>>)
         : _Mypair(_One_then_variadic_args_t{}, _Hasharg, _One_then_variadic_args_t{}, _Keyeqarg, 0.0f) {}
 
     template <class _Keyty>
@@ -176,7 +159,7 @@ public:
 
     template <class _Keyty1, class _Keyty2>
     _NODISCARD bool operator()(const _Keyty1& _Keyval1, const _Keyty2& _Keyval2) const
-        noexcept(_Nothrow_compare<key_equal, _Keyty1, _Keyty2>) {
+        noexcept(_Nothrow_compare<_Keyeq, _Keyty1, _Keyty2>) {
         // test if _Keyval1 NOT equal to _Keyval2
         return !static_cast<bool>(_Mypair._Myval2._Get_first()(_Keyval1, _Keyval2));
     }
@@ -190,7 +173,7 @@ public:
     }
 
     void swap(_Uhash_compare& _Rhs) noexcept(
-        conjunction_v<_Is_nothrow_swappable<_Hasher>, _Is_nothrow_swappable<key_equal>>) {
+        conjunction_v<_Is_nothrow_swappable<_Hasher>, _Is_nothrow_swappable<_Keyeq>>) {
         _Swap_adl(_Mypair._Get_first(), _Rhs._Mypair._Get_first());
         auto& _Lsecond = _Mypair._Myval2;
         auto& _Rsecond = _Rhs._Mypair._Myval2;
@@ -198,7 +181,7 @@ public:
         _STD swap(_Lsecond._Myval2, _Rsecond._Myval2);
     }
 
-    _Compressed_pair<_Hasher, _Compressed_pair<key_equal, float>> _Mypair;
+    _Compressed_pair<_Hasher, _Compressed_pair<_Keyeq, float>> _Mypair;
 };
 
 // CLASS TEMPLATE _Reinterpret_move_iter
@@ -223,16 +206,16 @@ struct _Reinterpret_move_iter {
 
     // post ++ intentionally omitted
 
-#ifndef __CUDACC__ // TRANSITION, VSO#568006
+#ifndef __CUDACC__ // TRANSITION, VSO-568006
     _NODISCARD
-#endif // TRANSITION, VSO#568006
+#endif // TRANSITION, VSO-568006
     friend bool operator==(const _Reinterpret_move_iter& _Lhs, const _Reinterpret_move_iter& _Rhs) {
         return _Lhs._Base == _Rhs._Base;
     }
 
-#ifndef __CUDACC__ // TRANSITION, VSO#568006
+#ifndef __CUDACC__ // TRANSITION, VSO-568006
     _NODISCARD
-#endif // TRANSITION, VSO#568006
+#endif // TRANSITION, VSO-568006
     friend bool operator!=(const _Reinterpret_move_iter& _Lhs, const _Reinterpret_move_iter& _Rhs) {
         return _Lhs._Base != _Rhs._Base;
     }
@@ -1233,7 +1216,7 @@ private:
     }
 
 public:
-    template <class _Iter = iterator, class = enable_if_t<!is_same_v<_Iter, const_iterator>>>
+    template <class _Iter = iterator, enable_if_t<!is_same_v<_Iter, const_iterator>, int> = 0>
     iterator erase(iterator _Plist) noexcept(_Nothrow_hash<_Traits, key_type>) /* strengthened */ {
         return _List._Make_iter(_Unchecked_erase(_Plist._Ptr));
     }
@@ -1271,12 +1254,12 @@ public:
 
     void clear() noexcept {
         // TRANSITION, ABI:
-        // LWG 2550 requires implementations to make clear() O(size()), independent of bucket_count().
+        // LWG-2550 requires implementations to make clear() O(size()), independent of bucket_count().
         // Unfortunately our current data structure / ABI does not allow achieving this in the general case because:
         //   (1) Finding the bucket that goes with an element requires running the hash function
         //   (2) The hash function operator() may throw exceptions, and
         //   (3) clear() is a noexcept function.
-        // We do comply with LWG 2550 if the hash function is noexcept, or if the container was empty.
+        // We do comply with LWG-2550 if the hash function is noexcept, or if the container was empty.
         const auto _Oldsize = _List._Mypair._Myval2._Mysize;
         if (_Oldsize == 0) {
             return;
@@ -1287,7 +1270,7 @@ public:
                 // In testing, hash<size_t>{}(size_t{}) takes about 14 times as much time as assigning a pointer, or
                 // ~7-8 times as much as clearing a bucket. Therefore, if we would need to assign over more than 8 times
                 // as many buckets as elements, remove element-by-element.
-                if ((bucket_count() >> 3) > _Oldsize) {
+                if (bucket_count() / 8 > _Oldsize) {
                     const auto _Head = _List._Mypair._Myval2._Myhead;
                     _Unchecked_erase(_Head->_Next, _Head);
                     return;
@@ -1418,14 +1401,14 @@ private:
     template <class _Keyty>
     _NODISCARD _Equal_range_result _Equal_range(const _Keyty& _Keyval, const size_t _Hashval) const
         noexcept(_Nothrow_compare<_Traits, key_type, _Keyty>&& _Nothrow_compare<_Traits, _Keyty, key_type>) {
-        const size_type _Bucket                    = _Hashval & _Mask;
-        _Unchecked_const_iterator _Where           = _Vec._Mypair._Myval2._Myfirst[_Bucket << 1];
-        const _Unchecked_const_iterator _Bucket_hi = _Vec._Mypair._Myval2._Myfirst[(_Bucket << 1) + 1];
-        const _Unchecked_const_iterator _End       = _Unchecked_end();
+        const size_type _Bucket              = _Hashval & _Mask;
+        _Unchecked_const_iterator _Where     = _Vec._Mypair._Myval2._Myfirst[_Bucket << 1];
+        const _Unchecked_const_iterator _End = _Unchecked_end();
         if (_Where == _End) {
             return {_End, _End, 0};
         }
 
+        const _Unchecked_const_iterator _Bucket_hi = _Vec._Mypair._Myval2._Myfirst[(_Bucket << 1) + 1];
         for (; _Traitsobj(_Traits::_Kfn(*_Where), _Keyval); ++_Where) {
             if (_Where == _Bucket_hi) {
                 return {_End, _End, 0};
@@ -1932,6 +1915,117 @@ protected:
         return _List._Getal();
     }
 
+    struct _Multi_equal_check_result {
+        bool _Equal_possible = false;
+        _Unchecked_const_iterator _Subsequent_first{}; // only useful if _Equal_possible
+    };
+
+    _NODISCARD _Multi_equal_check_result _Multi_equal_check_equal_range(
+        const _Hash& _Right, _Unchecked_const_iterator _First1) const {
+        // check that an equal_range of elements starting with *_First1 are a permutation of the corresponding
+        // equal_range of elements in _Right
+        auto& _Keyval = _Traits::_Kfn(*_First1);
+        // find the start of the matching run in the other container
+        const size_t _Hashval   = _Right._Traitsobj(_Keyval);
+        const size_type _Bucket = _Hashval & _Right._Mask;
+        auto _First2            = _Right._Vec._Mypair._Myval2._Myfirst[_Bucket << 1];
+        if (_First2 == _Right._Unchecked_end()) {
+            // no matching bucket, therefore no matching run
+            return {};
+        }
+
+        const auto _Bucket_hi = _Right._Vec._Mypair._Myval2._Myfirst[(_Bucket << 1) + 1];
+        for (; _Right._Traitsobj(_Traits::_Kfn(*_First2), _Keyval); ++_First2) {
+            // find first matching element in _Right
+            if (_First2 == _Bucket_hi) {
+                return {};
+            }
+        }
+
+        _Unchecked_const_iterator _Left_stop_at;
+        if
+            _CONSTEXPR_IF(_Traits::_Standard) {
+                _Left_stop_at = _Unchecked_end();
+            }
+        else {
+            // check the first elements for equivalence when !_Standard
+            if (_Right._Traitsobj(_Keyval, _Traits::_Kfn(*_First2))) {
+                return {};
+            }
+
+            const size_t _LHashval   = _Traitsobj(_Keyval);
+            const size_type _LBucket = _LHashval & _Mask;
+            const auto _LBucket_hi   = _Vec._Mypair._Myval2._Myfirst[(_LBucket << 1) + 1];
+            _Left_stop_at            = _LBucket_hi;
+            ++_Left_stop_at;
+        }
+
+        // trim matching prefixes
+        while (*_First1 == *_First2) {
+            // the right equal_range ends at the end of the bucket or on the first nonequal element
+            bool _Right_range_end = _First2 == _Bucket_hi;
+            ++_First2;
+            if (!_Right_range_end) {
+                _Right_range_end = _Right._Traitsobj(_Keyval, _Traits::_Kfn(*_First2));
+            }
+
+            // the left equal_range ends at the end of the container or on the first nonequal element
+            ++_First1;
+            const bool _Left_range_end = _First1 == _Left_stop_at || _Traitsobj(_Keyval, _Traits::_Kfn(*_First1));
+
+            if (_Left_range_end && _Right_range_end) {
+                // the equal_ranges were completely equal
+                return {true, _First1};
+            }
+
+            if (_Left_range_end || _Right_range_end) {
+                // one equal_range is a prefix of the other; not equal
+                return {};
+            }
+        }
+
+        // found a mismatched element, find the end of the equal_ranges and dispatch to _Check_match_counts
+        auto _Last1 = _First1;
+        auto _Last2 = _First2;
+        for (;;) {
+            bool _Right_range_end = _Last2 == _Bucket_hi;
+            ++_Last2;
+            if (!_Right_range_end) {
+                _Right_range_end = _Right._Traitsobj(_Keyval, _Traits::_Kfn(*_Last2));
+            }
+
+            ++_Last1;
+            const bool _Left_range_end = _Last1 == _Left_stop_at || _Traitsobj(_Keyval, _Traits::_Kfn(*_Last1));
+
+            if (_Left_range_end && _Right_range_end) {
+                // equal_ranges had the same length, check for permutation
+                return {_Check_match_counts(_First1, _Last1, _First2, _Last2, equal_to<>{}), _Last1};
+            }
+
+            if (_Left_range_end || _Right_range_end) {
+                // different number of elements in the range, not a permutation
+                return {};
+            }
+        }
+    }
+
+    _NODISCARD bool _Multi_equal(const _Hash& _Right) const {
+        static_assert(_Traits::_Multi, "This function only works with multi containers");
+        _STL_INTERNAL_CHECK(this->size() == _Right.size());
+        const auto _Last1 = _Unchecked_end();
+        auto _First1      = _Unchecked_begin();
+        while (_First1 != _Last1) {
+            const auto _Result = _Multi_equal_check_equal_range(_Right, _First1);
+            if (!_Result._Equal_possible) {
+                return false;
+            }
+
+            _First1 = _Result._Subsequent_first;
+        }
+
+        return true;
+    }
+
 #ifdef _ENABLE_STL_INTERNAL_CHECK
 public:
     void _Stl_internal_check_container_invariants() const noexcept {
@@ -2035,23 +2129,7 @@ _NODISCARD bool _Hash_equal_elements(const _Hash<_Traits>& _Left, const _Hash<_T
 
 template <class _Traits>
 _NODISCARD bool _Hash_equal_elements(const _Hash<_Traits>& _Left, const _Hash<_Traits>& _Right, true_type) {
-    const auto _Left_end = _Left._Unchecked_end();
-    for (auto _Next1 = _Left._Unchecked_begin(); _Next1 != _Left_end;) { // look for elements with equivalent keys
-        const auto& _Keyval    = _Traits::_Kfn(*_Next1);
-        const size_t _Lhashval = _Left._Traitsobj(_Keyval);
-        const size_t _Rhashval = _Right._Traitsobj(_Keyval); // P0809 prohibits reusing _Lhashval
-        const auto _Lrange     = _Left._Equal_range(_Keyval, _Lhashval);
-        const auto _Rrange     = _Right._Equal_range(_Keyval, _Rhashval);
-
-        if (_Lrange._Distance != _Rrange._Distance
-            || !_Is_permutation_unchecked(_Lrange._First, _Lrange._Last, _Rrange._First, equal_to<>{})) {
-            return false;
-        }
-
-        _Next1 = _Lrange._Last; // continue just past range
-    }
-
-    return true;
+    return _Left._Multi_equal(_Right);
 }
 #endif // !_HAS_IF_CONSTEXPR
 
@@ -2063,21 +2141,7 @@ _NODISCARD bool _Hash_equal(const _Hash<_Traits>& _Left, const _Hash<_Traits>& _
 
 #if _HAS_IF_CONSTEXPR
     if constexpr (_Traits::_Multi) {
-        const auto _Left_end = _Left._Unchecked_end();
-        for (auto _Next1 = _Left._Unchecked_begin(); _Next1 != _Left_end;) { // look for elements with equivalent keys
-            const auto& _Keyval    = _Traits::_Kfn(*_Next1);
-            const size_t _Lhashval = _Left._Traitsobj(_Keyval);
-            const size_t _Rhashval = _Right._Traitsobj(_Keyval); // P0809 prohibits reusing _Lhashval
-            const auto _Lrange     = _Left._Equal_range(_Keyval, _Lhashval);
-            const auto _Rrange     = _Right._Equal_range(_Keyval, _Rhashval);
-
-            if (_Lrange._Distance != _Rrange._Distance
-                || !_Is_permutation_unchecked(_Lrange._First, _Lrange._Last, _Rrange._First, equal_to<>{})) {
-                return false;
-            }
-
-            _Next1 = _Lrange._Last; // continue just past range
-        }
+        return _Left._Multi_equal(_Right);
     } else {
         for (const auto& _LVal : _Left) {
             // look for element with equivalent key
